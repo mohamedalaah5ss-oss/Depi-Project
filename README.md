@@ -40,20 +40,57 @@ The system leverages **Azure Blob Storage** as a Medallion-structured staging da
 [ Raw Excel/CSV Sources ]
          │
          ▼
-[ Azure Blob Storage ]        ── Bronze Layer  (raw-data/)
-         │
-         ▼  (in-memory stream processing via io.BytesIO)
-[ Python ETL Engine ]         ── Cleaned & transformed with Pandas
-         │
-         ▼
-[ Azure Blob Storage ]        ── Silver Layer  (cleaned-data/)
-         │
-         ▼  (orchestrated by Airflow, secured via SAS token auth)
-[ Snowflake Data Warehouse ]  ── Gold Layer  (Star Schema)
+┌───────────────────────────────────────────────────────────────┐
+│      Apache Airflow  ──  DAG: gym_complete_data_pipeline       │
+│                                                                 │
+│   clean_gym_excel_files → upload_csv_to_azure →                │
+│                              copy_data_into_snowflake_tables    │
+│                                                                 │
+│  [ Azure Blob Storage ]        ── Bronze Layer  (raw-data/)    │
+│           │                                                    │
+│           ▼  (in-memory stream processing via io.BytesIO)      │
+│  [ Python ETL Engine ]         ── Cleaned & transformed         │
+│           │                       with Pandas                  │
+│           ▼                                                    │
+│  [ Azure Blob Storage ]        ── Silver Layer (cleaned-data/) │
+│           │                                                    │
+│           ▼  (secured via SAS token auth)                      │
+│  [ Snowflake Data Warehouse ]  ── Gold Layer (Star Schema)     │
+└───────────────────────────────────────────────────────────────┘
          │
          ▼
 [ Power BI Dashboard ]        ── Executive KPIs & Reporting
 ```
+
+---
+
+## ⚙️ Apache Airflow Orchestration
+
+The entire pipeline is automated end-to-end by a single Airflow DAG, running on a `@daily` schedule inside Docker.
+
+<div align="center">
+
+| | |
+|---|---|
+| **DAG ID** | `gym_complete_data_pipeline` |
+| **Description** | End-to-End Gym Pipeline (Python → Azure → Snowflake) |
+| **Schedule** | `@daily` |
+| **Total Tasks** | 3 |
+
+</div>
+
+The DAG executes three sequential tasks, each mapping to a stage of the Medallion pipeline:
+
+| Order | Task ID | Responsibility |
+|:---:|---|---|
+| 1 | `clean_gym_excel_files` | Reads raw Excel sources and produces cleaned, validated data |
+| 2 | `upload_csv_to_azure` | Streams cleaned data into Azure Blob Storage (Silver layer) |
+| 3 | `copy_data_into_snowflake_tables` | Loads staged data into Snowflake (Gold layer) |
+
+<div align="center">
+<img src="docs/images/airflow_pipeline_success.png" alt="Airflow Pipeline Success" width="850"/>
+<br><sub>Successful DAG run — all three tasks completed with a total run duration of ~18 seconds.</sub>
+</div>
 
 ---
 
@@ -122,9 +159,11 @@ Built on top of the Snowflake Gold Layer, the dashboard is organized into six fo
 |---|---|
 | ![Architecture](docs/images/project_architecture.png) | ![Airflow DAG](docs/images/airflow_dag_list.png) |
 
-| Pipeline Run Success | Docker Containers |
-|---|---|
-| ![Pipeline Success](docs/images/airflow_pipeline_success.png) | ![Docker Containers](docs/images/docker_containers.png) |
+| Docker Containers |
+|---|
+| ![Docker Containers](docs/images/docker_containers.png) |
+
+> ℹ️ The Airflow pipeline success screenshot is featured in the [Apache Airflow Orchestration](#️-apache-airflow-orchestration) section above.
 
 <div align="center">
 <img src="docs/images/snowflake_stage_creation.png" alt="Snowflake Stage Creation" width="800"/>
@@ -141,12 +180,16 @@ Depi-Project/
 │
 ├── dags/                  # Airflow DAGs for workflow orchestration
 ├── src/                   # Core Python ETL and Azure Blob connection scripts
+├── sql/                   # SQL DDL and transformation scripts
 ├── dashboards/            # Power BI report files
-├── data_samples/          # Lightweight data samples (for schema preview)
+├── Data_Set/              # Original raw source data
+├── Cleaned_Data/          # Cleaned, pipeline-ready output data
 ├── docs/                  # Architecture diagrams and dashboard screenshots
 ├── docker-compose.yaml    # Containerized Airflow environment definition
 ├── requirements.txt       # Project dependencies
-└── .env.example           # Environment variables template
+├── .env.example           # Environment variables template
+├── .gitignore             # Files and folders excluded from version control
+└── LICENSE                # MIT License
 ```
 
 ---
@@ -195,7 +238,7 @@ python src/cloud_etl_pipeline.py
 Data Engineering Graduate Project — Digital Egypt Pioneers Initiative (DEPI)
 
 [![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/mohamedalaah5ss-oss)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohammed-alaa-engineer/>)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohammed-alaa-engineer/)
 
 ---
 
