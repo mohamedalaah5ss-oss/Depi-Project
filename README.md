@@ -12,7 +12,7 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge)
 
-> 📖 **Solo learning project (DEPI graduation)** — not currently accepting PRs. Feel free to fork and adapt.
+> > 📖 This repository contains a team graduation project developed as part of the Digital Egypt Pioneers Initiative (DEPI). The project is published for educational and portfolio purposes.
 
 </div>
 
