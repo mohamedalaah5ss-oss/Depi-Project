@@ -12,6 +12,8 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![License: MIT](https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge)
 
+> 📖 **Solo learning project (DEPI graduation)** — not currently accepting PRs. Feel free to fork and adapt.
+
 </div>
 
 ---
@@ -27,8 +29,8 @@ The system leverages **Azure Blob Storage** as a Medallion-structured staging da
 ## 🚀 Project Highlights
 
 - ⚡ **In-Memory Cloud ETL** — eliminates local disk I/O bottlenecks by streaming raw blobs directly into memory (`io.BytesIO`), cleansing with Pandas, and writing clean CSV output straight back to Azure
-- 🥉🥈🥇 **Medallion Data Lake Design** — data separated into `raw-data/` (immutable source lineage) and `cleaned-data/` (analytics staging), feeding a Snowflake Gold-layer star schema
-- 🔐 **Zero-Trust Security** — credentials decoupled via environment variables (`.env`), with Snowflake staging secured through least-privilege, time-boxed **SAS tokens**
+- 🥉🥈🥇 **Medallion Data Lake Design** — data separated into `raw_data/` (immutable source lineage) and `cleaned_data/` (analytics staging), feeding a Snowflake Gold-layer star schema
+- 🔐 **Zero-Trust Security** — credentials decoupled via environment variables (`.env`), with Snowflake staging secured through least-privilege, time-boxed **SAS tokens** rather than storage account keys
 - 🐳 **Containerized Orchestration** — Apache Airflow deployed with a PostgreSQL metadata backend via `docker-compose`, for scheduled, resilient, automated pipeline runs
 - 📊 **Executive BI Reporting** — Snowflake Gold-layer data feeds a multi-page Power BI dashboard for business-ready insights
 
@@ -46,13 +48,13 @@ The system leverages **Azure Blob Storage** as a Medallion-structured staging da
 │   clean_gym_excel_files → upload_csv_to_azure →                │
 │                              copy_data_into_snowflake_tables    │
 │                                                                 │
-│  [ Azure Blob Storage ]        ── Bronze Layer  (raw-data/)    │
+│  [ Azure Blob Storage ]        ── Bronze Layer  (raw_data/)    │
 │           │                                                    │
 │           ▼  (in-memory stream processing via io.BytesIO)      │
 │  [ Python ETL Engine ]         ── Cleaned & transformed         │
 │           │                       with Pandas                  │
 │           ▼                                                    │
-│  [ Azure Blob Storage ]        ── Silver Layer (cleaned-data/) │
+│  [ Azure Blob Storage ]        ── Silver Layer (cleaned_data/) │
 │           │                                                    │
 │           ▼  (secured via SAS token auth)                      │
 │  [ Snowflake Data Warehouse ]  ── Gold Layer (Star Schema)     │
@@ -61,6 +63,45 @@ The system leverages **Azure Blob Storage** as a Medallion-structured staging da
          ▼
 [ Power BI Dashboard ]        ── Executive KPIs & Reporting
 ```
+
+> **Design rationale:** Two separate Blob Storage layers (Bronze → Silver) are used intentionally for **auditability and replayability** — the Bronze layer preserves the immutable raw source, allowing the Silver transformation to be re-run or rolled back at any point without re-ingesting from the origin. This decouples ingestion from loading and is a standard enterprise-grade Medallion pattern.
+
+---
+
+## ❄️ Snowflake Star Schema (Gold Layer)
+
+The Gold Layer is modelled as a **Star Schema** in Snowflake (`GYM_DB.GOLD`), optimized for Power BI time-intelligence and slice/dice queries:
+
+```text
+                        ┌─────────────────┐
+                        │   fact_sales    │
+                        │─────────────────│
+                        │ sale_id (PK)    │
+          ┌─────────────│ customer_id(FK) │─────────────┐
+          │             │ product_id (FK) │             │
+          ▼             │ branch_id  (FK) │             ▼
+  ┌──────────────┐      │ date_id    (FK) │      ┌──────────────┐
+  │ dim_customer │      │ quantity        │      │  dim_product │
+  │──────────────│      │ unit_price      │      │──────────────│
+  │ customer_id  │      │ total_amount    │      │ product_id   │
+  │ name         │      │ payment_method  │      │ product_name │
+  │ gender       │      │ rating          │      │ category     │
+  │ age          │      └────────┬────────┘      │ unit_price   │
+  │ membership   │               │               └──────────────┘
+  │ join_date    │      ┌────────┘
+  └──────────────┘      │
+                ┌───────┴───────┐      ┌──────────────┐
+                │   dim_date   │      │  dim_branch  │
+                │──────────────│      │──────────────│
+                │ date_id      │      │ branch_id    │
+                │ full_date    │      │ branch_name  │
+                │ day / month  │      │ city         │
+                │ quarter/year │      │ region       │
+                │ weekday      │      └──────────────┘
+                └──────────────┘
+```
+
+📄 Full column definitions, data types, and grain documentation: [docs/DATA_DICTIONARY.md](docs/DATA_DICTIONARY.md)
 
 ---
 
@@ -102,7 +143,7 @@ The DAG executes three sequential tasks, each mapping to a stage of the Medallio
 |---|---|
 | **Language** | Python, SQL |
 | **Data Processing** | Pandas (in-memory, stream-based) |
-| **Cloud Storage** | Azure Blob Storage (Medallion: raw-data / cleaned-data) |
+| **Cloud Storage** | Azure Blob Storage (Medallion: raw_data / cleaned_data) |
 | **Cloud Data Warehouse** | Snowflake (Star Schema) |
 | **Security** | SAS Tokens, Environment Variables (`.env`) |
 | **Orchestration** | Apache Airflow |
@@ -181,16 +222,24 @@ Depi-Project/
 ├── dags/                  # Airflow DAGs for workflow orchestration
 ├── src/                   # Core Python ETL and Azure Blob connection scripts
 ├── sql/                   # SQL DDL and transformation scripts
-├── dashboards/            # Power BI report files
-├── Data_Set/              # Original raw source data
-├── Cleaned_Data/          # Cleaned, pipeline-ready output data
-├── docs/                  # Architecture diagrams and dashboard screenshots
+├── dashboards/            # Power BI report files (.pbix)
+├── raw_data/              # Sample raw source data (representative subset; full dataset in Azure Bronze layer)
+├── cleaned_data/          # Sample cleaned output (representative subset; full dataset in Azure Silver layer)
+├── docs/
+│   ├── images/            # Dashboard screenshots and UI captures
+│   ├── architecture/      # Architecture diagrams and draw.io source files
+│   ├── DATA_DICTIONARY.md # Star schema column definitions, types, and grain
+│   └── DEPLOYMENT.md      # Full setup and installation guide
 ├── docker-compose.yaml    # Containerized Airflow environment definition
 ├── requirements.txt       # Project dependencies
-├── .env.example           # Environment variables template
+├── .env.example           # Environment variables template (no real credentials)
 ├── .gitignore             # Files and folders excluded from version control
+├── CHANGELOG.md           # Version history and change log
+├── SECURITY.md            # Credential handling and vulnerability reporting
 └── LICENSE                # MIT License
 ```
+
+> **Note on data folders:** `raw_data/` and `cleaned_data/` contain a small representative sample of the dataset for schema preview purposes only. The full pipeline reads and writes to **Azure Blob Storage** — no local storage is used in production runs.
 
 ---
 
@@ -219,6 +268,8 @@ Access the Airflow UI at `http://localhost:8082` (default credentials: `admin` /
 ```bash
 python src/cloud_etl_pipeline.py
 ```
+
+📋 **Full setup guide with Azure, Snowflake, and troubleshooting steps:** [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
 
 ---
 
