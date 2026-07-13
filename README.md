@@ -283,10 +283,18 @@ python src/cloud_etl_pipeline.py
 
 ---
 
-## 👤 Author
+## 👥 Project Team
 
-**Mohamed Alaa**
-Data Engineering Graduate Project — Digital Egypt Pioneers Initiative (DEPI)
+This project was developed collaboratively as part of the **Digital Egypt Pioneers Initiative (DEPI)**.
+
+**Prepared by**
+
+- Mohamed Alaa Hussein Ahmed
+- Hossam Hassan Elsayed
+- Mohamed Magdy Mahmoud
+- Yousef Atef Ibrahim
+- Ahmed Khaled Abdelazim
+- Mohamed Abdelazim Mohamed Ali
 
 [![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=flat-square&logo=github&logoColor=white)](https://github.com/mohamedalaah5ss-oss)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohammed-alaa-engineer/)
