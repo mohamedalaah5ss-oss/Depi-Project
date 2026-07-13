@@ -1,0 +1,19 @@
+ProductSubcategoryKey,SubcategoryName,CategoryName
+1,BCAA,Amino Acids
+2,Glutamine,Amino Acids
+3,Gainer,Carbs
+4,Meal Replacement,Carbs
+5,Gloves,Clothing
+6,Jackets,Clothing
+7,Jerseys,Clothing
+8,Shorts,Clothing
+9,Socks,Clothing
+10,Vests,Clothing
+11,Tights,Clothing
+12,Beef Protein,Protein
+13,Blended Protein,Protein
+14,Casein Protein,Protein
+15,Egg Protein,Protein
+16,Vegan Protein,Protein
+17,Whey Protein,Protein
+18,Vitamins,Vitamins

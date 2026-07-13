@@ -2,12 +2,12 @@
 .env
 *.txt
 Snowflake Account.txt
-
+#
 # Data Files (Never push raw/cleaned data to Git)
-*.csv
-*.xlsx
-OldData/
-CleanedData/
+#*.csv
+#*.xlsx
+#OldData/
+#CleanedData
 
 # Python & Airflow
 __pycache__/
