@@ -1,0 +1,57 @@
+version: '3'
+x-airflow-common: &airflow-common
+  image: apache/airflow:2.7.1-python3.10
+  environment:
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW_CONN_SNOWFLAKE_GYM_CONN: "snowflake://sam954:wjGZ2RZimXBBvCE@/?account=pszvssg-qj81868&warehouse=COMPUTE_WH&database=GYM_DB&schema=GYM_SCHEMA"
+    AIRFLOW__CORE__LOAD_CONNECTIONS: "true"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__WEBSERVER__SECRET_KEY: "super_secret_key_for_gym_project"
+    AIRFLOW__WEBSERVER__EXPOSE_HOSTNAME: 'true'
+    _PIP_ADDITIONAL_REQUIREMENTS: "pandas openpyxl azure-storage-blob apache-airflow-providers-snowflake psycopg2-binary"
+  volumes:
+    - ./dags:/opt/airflow/dags
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__WEBSERVER__SECRET_KEY: "super_secret_key_for_gym_project"
+      _PIP_ADDITIONAL_REQUIREMENTS: "pandas openpyxl azure-storage-blob apache-airflow-providers-snowflake psycopg2-binary"
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: airflow
+      _AIRFLOW_WWW_USER_PASSWORD: airflow
+
+  webserver:
+    <<: *airflow-common
+
+    command: >
+     bash -c "airflow users create --username admin --firstname Hossam --lastname Hassan --role Admin --email admin@gym.com --password admin && exec airflow webserver"
+    ports:
+    - "8082:8080"
+    restart: always
+
+  scheduler:
+   <<: *airflow-common
+   command: scheduler
+   restart: always
